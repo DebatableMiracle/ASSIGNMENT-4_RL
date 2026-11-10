@@ -114,8 +114,8 @@ def run(args, name, q, update_fn, save_extra=None):
     n_upd, t0, ep_ret, ep_len = 0, time.time(), 0.0, 0
     ep_hist = collections.deque(maxlen=100)          # (team return, length, success) of last 100 training episodes
     acc, n_ep_total, last_eval = collections.defaultdict(float), 0, float("nan")
-    bar = tqdm(total=args.steps, desc=name, unit="step", unit_scale=True, dynamic_ncols=True, smoothing=0.05,
-               disable=not sys.stderr.isatty(), bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}, {rate_fmt}]{postfix}")
+    bar = tqdm(total=args.steps, desc=f"{name:<16}", unit="step", dynamic_ncols=True, smoothing=0.05,
+               bar_format="{desc} |{bar:25}| {percentage:5.1f}% [{elapsed}<{remaining}, {rate_fmt}] {postfix}")
 
     for t in range(1, args.steps + 1):
         eps = max(args.eps_end, 1 - (1 - args.eps_end) * t / args.eps_decay)

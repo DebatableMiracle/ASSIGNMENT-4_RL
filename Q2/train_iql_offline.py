@@ -262,8 +262,16 @@ def train_iql(seed, args):
     t0 = time.time()
     accum_v_loss, accum_q_loss, accum_pi_loss, accum_adv = 0.0, 0.0, 0.0, 0.0
     log_interval = args.log_every
+    last_eval_ret = float("nan")
 
-    for step in range(1, args.total_steps + 1):
+    pbar = tqdm(
+        range(1, args.total_steps + 1),
+        desc=f"IQL [Seed {seed}]",
+        dynamic_ncols=True,
+        bar_format="{desc} |{bar:25}| {percentage:5.1f}% [{elapsed}<{remaining}, {rate_fmt}] {postfix}",
+    )
+
+    for step in pbar:
         obs, actions, rewards, next_obs, terminals = dataset.sample(args.batch_size, rng)
 
         # ── 1. Value Network Update (Expectile Regression) ────────────────────
@@ -322,14 +330,21 @@ def train_iql(seed, args):
             }
             loss_log.write(json.dumps(loss_entry) + "\n")
             loss_log.flush()
+            pbar.set_postfix(
+                q=f"{accum_q_loss / log_interval:.2f}",
+                v=f"{accum_v_loss / log_interval:.2f}",
+                ret=f"{last_eval_ret:.1f}",
+                refresh=False,
+            )
             accum_v_loss, accum_q_loss, accum_pi_loss, accum_adv = 0.0, 0.0, 0.0, 0.0
 
         # Periodic evaluation
         if step % args.eval_every == 0 or step == args.total_steps:
             ret_mean, ret_std = evaluate_policy(env_id, actor, n_episodes=args.eval_episodes, seed=1000, device=device)
+            last_eval_ret = ret_mean
             elapsed = time.time() - t0
             steps_per_sec = step / max(1e-5, elapsed)
-            print(f"[Seed {seed}] Step {step:7d}/{args.total_steps} | Return: {ret_mean:7.2f} ± {ret_std:6.2f} | Speed: {steps_per_sec:5.1f} steps/s")
+            pbar.write(f"[Seed {seed}] Step {step:7d}/{args.total_steps} | Return: {ret_mean:7.2f} ± {ret_std:6.2f} | Speed: {steps_per_sec:5.1f} steps/s")
             curve.append({"step": step, "return_mean": ret_mean, "return_std": ret_std})
             with open(os.path.join(results_dir, "eval_curve.json"), "w") as f:
                 json.dump(curve, f, indent=2)

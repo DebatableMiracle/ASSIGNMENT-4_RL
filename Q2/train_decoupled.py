@@ -239,7 +239,9 @@ def train_critic_td3bc(buf, obs_dim, act_dim, max_act, steps, device, rng, log_f
     opt_q = torch.optim.Adam(q_net.parameters(), lr=LR_CRITIC)
     opt_bc = torch.optim.Adam(bc_actor.parameters(), lr=LR_CRITIC)
 
-    for step in range(1, steps + 1):
+    pbar = tqdm(range(1, steps + 1), desc="TD3+BC Critic", dynamic_ncols=True,
+                bar_format="{desc} |{bar:25}| {percentage:5.1f}% [{elapsed}<{remaining}, {rate_fmt}] {postfix}")
+    for step in pbar:
         o, a, r, no, d = buf.sample(BATCH_SIZE, rng)
 
         # Train target BC behavior generator
@@ -280,7 +282,9 @@ def train_critic_iql(buf, obs_dim, act_dim, max_act, steps, device, rng, log_f):
     opt_q = torch.optim.Adam(q_net.parameters(), lr=LR_CRITIC)
     opt_v = torch.optim.Adam(v_net.parameters(), lr=LR_CRITIC)
 
-    for step in range(1, steps + 1):
+    pbar = tqdm(range(1, steps + 1), desc="IQL Critic", dynamic_ncols=True,
+                bar_format="{desc} |{bar:25}| {percentage:5.1f}% [{elapsed}<{remaining}, {rate_fmt}] {postfix}")
+    for step in pbar:
         o, a, r, no, d = buf.sample(BATCH_SIZE, rng)
 
         # V expectile regression
@@ -326,7 +330,9 @@ def train_critic_cql(buf, obs_dim, act_dim, max_act, steps, device, rng, log_f):
 
     opt_q = torch.optim.Adam(q_net.parameters(), lr=LR_CRITIC)
 
-    for step in range(1, steps + 1):
+    pbar = tqdm(range(1, steps + 1), desc="CQL Critic", dynamic_ncols=True,
+                bar_format="{desc} |{bar:25}| {percentage:5.1f}% [{elapsed}<{remaining}, {rate_fmt}] {postfix}")
+    for step in pbar:
         o, a, r, no, d = buf.sample(BATCH_SIZE, rng)
 
         # Standard Bellman error with soft_q_backup=False (deterministic target)
@@ -370,7 +376,9 @@ def extract_policy(algo, buf, q_net, v_net, obs_dim, act_dim, max_act, steps, de
     actor = GaussianPolicy(obs_dim, act_dim, max_act).to(device)
     opt = torch.optim.Adam(actor.parameters(), lr=LR_POLICY)
 
-    for step in range(1, steps + 1):
+    pbar = tqdm(range(1, steps + 1), desc=f"Policy [{algo.upper()}]", dynamic_ncols=True,
+                bar_format="{desc} |{bar:25}| {percentage:5.1f}% [{elapsed}<{remaining}, {rate_fmt}] {postfix}")
+    for step in pbar:
         o, a, *_ = buf.sample(BATCH_SIZE, rng)
 
         if algo == "td3bc":
