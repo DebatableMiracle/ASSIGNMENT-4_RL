@@ -1,0 +1,7 @@
+{
+ "n_fail": 1,
+ "n_total": 100,
+ "fractions": {
+  "livelock": 1.0
+ }
+}
